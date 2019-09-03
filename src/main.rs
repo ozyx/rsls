@@ -23,11 +23,20 @@ fn main() {
                 .long("all")
                 .help("Do not ignore entries starting with '.'"),
         )
+        .arg(
+            Arg::with_name("recurse")
+                .short("r")
+                .long("recurse")
+                .help("Print entries recursively"),
+        )
         .get_matches();
     let path = matches.value_of("path").unwrap_or(".");
     let show_hidden = matches.is_present("all");
-    let dir = list(Path::new(path), show_hidden);
-    dir.print();
+    let recurse = matches.is_present("recurse");
+    let dir = list(Path::new(path), show_hidden, recurse);
+    for entry in dir.entries {
+        entry.print(recurse);
+    }
 }
 
 struct Dir {
@@ -36,18 +45,20 @@ struct Dir {
 }
 
 impl Dir {
-    pub fn print(&self) -> () {
-        self.printi(0);
+    pub fn print(&self, recurse: bool) -> () {
+        self.printi(0, recurse);
     }
-    fn printi(&self, indent:usize) -> () {
-        println!("{:->width$}{}", "-", self.name, width = indent);
-        self.entries.iter().for_each(|item|{
-            item.printi(indent+2);
-        });
+    fn printi(&self, indent: usize, recurse: bool) -> () {
+        println!("{: >width$}{}", "", self.name, width = indent);
+        if recurse {
+            self.entries.iter().for_each(|item| {
+                item.printi(indent + 2, recurse);
+            });
+        }
     }
 }
 
-fn list(path: &Path, show_hidden: bool) -> Dir {
+fn list(path: &Path, show_hidden: bool, recurse: bool) -> Dir {
     let mut subs = Vec::<Dir>::new();
     if path.is_dir() {
         let mut entries = fs::read_dir(path).unwrap();
@@ -58,7 +69,7 @@ fn list(path: &Path, show_hidden: bool) -> Dir {
                     let file_name = entry.file_name();
                     let file_name = file_name.to_str().take();
                     if !is_hidden(&file_name.unwrap()) || show_hidden {
-                        subs.push(list(entry.path().as_path(), show_hidden));
+                        subs.push(list(entry.path().as_path(), show_hidden, recurse));
                     }
                 }
                 Err(_) => {}
@@ -66,10 +77,10 @@ fn list(path: &Path, show_hidden: bool) -> Dir {
         }
     }
     Dir {
-        name: path.file_name().map_or("unk1".to_string(),|s|{
+        name: path.file_name().map_or("unk1".to_string(), |s| {
             s.to_str().unwrap_or("unk2").to_string()
         }),
-        entries: subs
+        entries: subs,
     }
 }
 
