@@ -1,8 +1,9 @@
 extern crate clap;
 use clap::{App, Arg};
-use std::fs::{self, DirEntry};
-use std::io;
 use std::path::Path;
+
+mod fs;
+
 
 fn main() {
     let matches = App::new("rsls")
@@ -24,10 +25,16 @@ fn main() {
                 .help("Do not ignore entries starting with '.'"),
         )
         .arg(
-            Arg::with_name("recurse")
+            Arg::with_name("reverse")
                 .short("r")
+                .long("reverse")
+                .help("Reverse the order of the sort to get reverse lexicographical order")
+        )
+        .arg(
+            Arg::with_name("recurse")
+                .short("R")
                 .long("recurse")
-                .help("Print entries recursively"),
+                .help("Recursively list subdirectories encountered"),
         )
         .get_matches();
     let path = matches.value_of("path").unwrap_or(".");
@@ -59,7 +66,7 @@ impl Dir {
 fn list(path: &Path, show_hidden: bool, recurse: bool) -> Dir {
     let mut subs = Vec::<Dir>::new();
     if path.is_dir() {
-        let mut entries = fs::read_dir(path).unwrap();
+        let mut entries = std::fs::read_dir(path).unwrap();
 
         while let Some(entry) = entries.next() {
             match entry {
