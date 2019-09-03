@@ -35,7 +35,7 @@ fn main() {
     let recurse = matches.is_present("recurse");
     let dir = list(Path::new(path), show_hidden, recurse);
     for entry in dir.entries {
-        entry.print(recurse);
+        entry.print();
     }
 }
 
@@ -45,16 +45,14 @@ struct Dir {
 }
 
 impl Dir {
-    pub fn print(&self, recurse: bool) -> () {
-        self.printi(0, recurse);
+    pub fn print(&self) -> () {
+        self.printi(0);
     }
-    fn printi(&self, indent: usize, recurse: bool) -> () {
+    fn printi(&self, indent: usize) -> () {
         println!("{: >width$}{}", "", self.name, width = indent);
-        if recurse {
-            self.entries.iter().for_each(|item| {
-                item.printi(indent + 2, recurse);
-            });
-        }
+        self.entries.iter().for_each(|item| {
+            item.printi(indent + 2);
+        });
     }
 }
 
@@ -69,7 +67,14 @@ fn list(path: &Path, show_hidden: bool, recurse: bool) -> Dir {
                     let file_name = entry.file_name();
                     let file_name = file_name.to_str().take();
                     if !is_hidden(&file_name.unwrap()) || show_hidden {
-                        subs.push(list(entry.path().as_path(), show_hidden, recurse));
+                        if recurse {
+                            subs.push(list(entry.path().as_path(), show_hidden, recurse));
+                        } else {
+                            subs.push(Dir {
+                                name: entry.file_name().to_str().unwrap_or("unk2").to_string(),
+                                entries: Vec::new(),
+                            })
+                        }
                     }
                 }
                 Err(_) => {}
