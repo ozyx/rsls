@@ -26,29 +26,51 @@ fn main() {
         .get_matches();
     let path = matches.value_of("path").unwrap_or(".");
     let show_hidden = matches.is_present("all");
-    list(Path::new(path), show_hidden);
+    let dir = list(Path::new(path), show_hidden);
+    dir.print();
 }
 
-fn list(path: &Path, show_hidden: bool) -> io::Result<()> {
+struct Dir {
+    name: String,
+    entries: Vec<Dir>,
+}
+
+impl Dir {
+    pub fn print(&self) -> () {
+        self.printi(0);
+    }
+    fn printi(&self, indent:usize) -> () {
+        println!("{:->width$}{}", "-", self.name, width = indent);
+        self.entries.iter().for_each(|item|{
+            item.printi(indent+2);
+        });
+    }
+}
+
+fn list(path: &Path, show_hidden: bool) -> Dir {
+    let mut subs = Vec::<Dir>::new();
     if path.is_dir() {
-        let mut entries = fs::read_dir(path)?.peekable();
+        let mut entries = fs::read_dir(path).unwrap();
 
         while let Some(entry) = entries.next() {
-            match entry?.file_name().to_str() {
-                Some(file_name) => {
-                    if !is_hidden(&file_name) || show_hidden {
-                        if entries.peek().is_some() {
-                            print!("{}  ", file_name);
-                        } else {
-                            print!("{}", file_name);
-                        }
+            match entry {
+                Ok(entry) => {
+                    let file_name = entry.file_name();
+                    let file_name = file_name.to_str().take();
+                    if !is_hidden(&file_name.unwrap()) || show_hidden {
+                        subs.push(list(entry.path().as_path(), show_hidden));
                     }
                 }
-                None => {}
+                Err(_) => {}
             }
         }
     }
-    Ok(())
+    Dir {
+        name: path.file_name().map_or("unk1".to_string(),|s|{
+            s.to_str().unwrap_or("unk2").to_string()
+        }),
+        entries: subs
+    }
 }
 
 fn is_hidden(file_name: &str) -> bool {
