@@ -1,40 +1,19 @@
+#[macro_use]
 extern crate clap;
 use clap::{App, Arg};
 use std::path::Path;
 
 
 fn main() {
-    let matches = App::new("rsls")
-        .version("0.1")
-        .about("Yet another 'ls' replacement written in Rust")
-        .author("Jesse Mazzella")
-        .arg(
-            Arg::with_name("path")
-                .short("p")
-                .long("path")
-                .help("The path to run against")
-                .index(1)
-                .takes_value(true),
-        )
-        .arg(
-            Arg::with_name("all")
-                .short("a")
-                .long("all")
-                .help("Do not ignore entries starting with '.'"),
-        )
-        .arg(
-            Arg::with_name("reverse")
-                .short("r")
-                .long("reverse")
-                .help("Reverse the order of the sort to get reverse lexicographical order")
-        )
-        .arg(
-            Arg::with_name("recurse")
-                .short("R")
-                .long("recurse")
-                .help("Recursively list subdirectories encountered"),
-        )
-        .get_matches();
+    let matches = clap_app!(rsls => 
+        (version: "0.1")
+        (author: "Jesse Mazzella <jessemazzella@gmail.com>")
+        (about: "Yet another 'ls' replacement written in Rust")
+        (@arg path: -p --path +takes_value index(1) "The path to run against")
+        (@arg all: -a --all "Do not ignore entries starting with '.'")
+        (@arg reverse: -r --reverse "Reverse the order of the sort to get reverse lexicographical order")
+        (@arg recurse: -R --recurse "Recursively list subdirectories encountered")
+    ).get_matches();
     let path = matches.value_of("path").unwrap_or(".");
     let show_hidden = matches.is_present("all");
     let recurse = matches.is_present("recurse");
