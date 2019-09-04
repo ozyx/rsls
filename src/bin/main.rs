@@ -2,8 +2,6 @@ extern crate clap;
 use clap::{App, Arg};
 use std::path::Path;
 
-mod fs;
-
 
 fn main() {
     let matches = App::new("rsls")

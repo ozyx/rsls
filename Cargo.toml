@@ -8,3 +8,12 @@ edition = "2018"
 
 [dependencies]
 clap = "2.33.0"
+
+[[bin]]
+name = "rsls"
+path = "src/bin/main.rs"
+doc = false
+
+[lib]
+name = "rsls"
+path = "src/rsls.rs"
