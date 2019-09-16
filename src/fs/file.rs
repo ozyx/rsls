@@ -22,4 +22,9 @@ impl File {
     pub fn is_file(&self) -> bool {
         self.metadata.is_file()
     }
+
+    /// Whether this file is a hidden file or directory
+    pub fn is_hidden(&self) -> bool {
+        return self.name.starts_with(".");
+    }
 }
